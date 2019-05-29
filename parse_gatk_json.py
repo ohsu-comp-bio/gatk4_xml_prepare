@@ -49,6 +49,7 @@ class Mappings(object):
                              'Format': 'select',
                              'String': 'text',
                              'Set[String]': 'text',
+                             'SortOrder': 'select',
                              'File': 'data',
                              'Set[File]': 'data',
                              'Set[MetricAccumulationLevel]': 'text',
@@ -318,16 +319,24 @@ class Mappings(object):
 
         # Relate tool name to a common argument name, such as input (which can be connected to different file types),
         # and a file type.
-        self.tool_file_type = {'Mutect2': {'input': 'sam'}}
-        self.tool_output_file_type = {'Mutect2': {'output': 'vcf'}}
+        self.tool_file_type = {'Mutect2': {'input': 'sam'},
+                               'SortSam': {'INPUT': 'sam'}}
+        self.tool_output_file_type = {'Mutect2': {'output': 'vcf'},
+                                      'SortSam': {'OUTPUT': 'sam'}}
 
         # Relate the name of the argument to the selection of macros that goes with it.
         self.macro_to_param = {'input': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['gatk_bam_req_chth'],
                                                  'main_xml': ['gatk_bam_req_params']}},
+                               'INPUT': {'sam': {'pre_chth': ['picard_bam_index'],
+                                                 'main_chth': ['picard_bam_input'],
+                                                 'main_xml': ['gatk_bam_req_params']}},
                                'output': {'vcf': {'main_chth': ['vcf_output_opts'],
                                                   'main_xml': ['gzip_vcf_params'],
-                                                  'out_xml': ['gzip_vcf_output_params']}}
+                                                  'out_xml': ['gzip_vcf_output_params']}},
+                               'OUTPUT': {'sam': {'main_chth': [],
+                                                  'main_xml': [],
+                                                  'out_xml': []}}
                                }
 
         # For parameters we universally do not want to see in the UI.
