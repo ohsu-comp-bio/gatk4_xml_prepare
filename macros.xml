@@ -225,6 +225,63 @@
     #end for
     ]]></template>
 
+    <!--Sequence dictionary selection options for Picard type tools-->
+    <template name="picard_seqdict_opts">
+    #for $sect in $sections
+        #if $varExists($sect + "seqdict_source.seqdict_source_selector")
+            #if $getVar($sect + "seqdict_source.seqdict_source_selector") != "no_seq_dict"
+                #if $getVar($sect + "seqdict_source.seqdict_source_selector") != "history"
+                    #set seq_dict_loc = ''.join($getVar($sect + seqdict_source.seqdict_sequence).fields.path.split('.')[:-1]) + '.dict'
+                    --SEQUENCE_DICTIONARY $seq_dict_loc
+                #else
+                    --SEQUENCE_DICTIONARY $getVar($sect + "seqdict_source.seqdict_sequence")
+                #end if
+            #end if
+        #end if
+    #end for
+    </template>
+
+    <template name="gatk_seqdict">
+    #for $sect in $sections
+        #if $varExists($sect + "seqdict_source.seqdict_source_selector")
+            #if $getVar($sect + "seqdict_source.seqdict_source_selector") != "no_seq_dict"
+                #if $getVar($sect + "seqdict_source.seqdict_source_selector") != "history"
+                    #set $seq_dict_loc = ''.join($getVar($sect + "seqdict_source.seqdict_sequence").fields.path.split('.')[:-1]) + '.dict'
+                    --sequence-dictionary $seq_dict_loc
+                #else
+                    --sequence-dictionary $getVar($sect + "seqdict_source.seqdict_sequence")
+                #end if
+            #end if
+        #end if
+    #end for
+    </template>
+
+    <xml name="seq_dict_sel">
+        <conditional name="seqdict_source">
+            <param name="seqdict_source_selector" type="select" label="Choose the source for the sequence dictionary">
+                <option value="cached">Locally cached</option>
+                <option value="history">History</option>
+                <option value="no_seq_dict" selected="true">Do not pass</option>
+            </param>
+            <when value="cached">
+                <param name="seqdict_sequence" type="select" label="Sequence Dictionary" help="Sequence dictionary file." >
+                    <options from_data_table="all_fasta" >
+                        <validator type="no_options" message="A built-in reference genome is not available for the build associated with the selected input file" />
+                    </options>
+                </param>
+            </when>
+            <when value="history">
+                <param name="seqdict_sequence" type="data" format="txt" label="Sequence Dictionary" help="Sequence dictionary file. Must be in dict format." />
+            </when>
+        </conditional>
+    </xml>
+
+
+
+
+
+
+
 
 
 
@@ -602,48 +659,6 @@
         <!--#end if-->
     <!--</template>-->
 
-    <!--Sequence dictionary selection options for Picard type tools-->
-    <xml name="seq_dict_sel">
-        <conditional name="seqdict_source">
-            <param name="seqdict_source_selector" type="select" label="Choose the source for the sequence dictionary">
-                <option value="cached">Locally cached</option>
-                <option value="history">History</option>
-                <option value="no_seq_dict" selected="true">Do not pass</option>
-            </param>
-            <when value="cached">
-                <param name="seqdict_sequence" type="select" label="Sequence Dictionary" help="Sequence dictionary file." >
-                    <options from_data_table="all_fasta" >
-                        <validator type="no_options" message="A built-in reference genome is not available for the build associated with the selected input file" />
-                    </options>
-                </param>
-            </when>
-            <when value="history">
-                <param name="seqdict_sequence" type="data" format="txt" label="Sequence Dictionary" help="Sequence dictionary file. Must be in dict format." />
-            </when>
-        </conditional>
-    </xml>
-
-    <template name="picard_seqdict_opts">
-        #if $optional.seqdict_source.seqdict_source_selector != "no_seq_dict"
-            #if $optional.seqdict_source.seqdict_source_selector != "history"
-                #set seq_dict_loc = ''.join($optional.seqdict_source.seqdict_sequence.fields.path.split('.')[:-1]) + '.dict'
-                --SEQUENCE_DICTIONARY $seq_dict_loc
-            #else
-                --SEQUENCE_DICTIONARY ${optional.seqdict_source.seqdict_sequence}
-            #end if
-        #end if
-    </template>
-
-    <template name="gatk_seqdict">
-        #if $seqdict_source.seqdict_source_selector != "no_seq_dict"
-            #if $seqdict_source.seqdict_source_selector != "history"
-                #set seq_dict_loc = ''.join($seqdict_source.seqdict_sequence.fields.path.split('.')[:-1]) + '.dict'
-                --sequence-dictionary $seq_dict_loc
-            #else
-                --sequence-dictionary ${seqdict_source.seqdict_sequence}
-            #end if
-        #end if
-    </template>
 
     <!--Citations-->
     <xml name="citations">
