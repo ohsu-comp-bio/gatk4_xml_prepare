@@ -338,10 +338,6 @@
   --read-filter $common.read_filter
 #end if
 
-#if $common.read_index
-  --read-index $common.read_index
-#end if
-
 #if $common.read_validation_stringency
   --read-validation-stringency $common.read_validation_stringency
 #end if
@@ -359,10 +355,7 @@
   --seconds-between-progress-updates $common.seconds_between_progress_updates
 #end if
 
-#if $common.sequence_dictionary
-  --sequence-dictionary $common.sequence_dictionary
-#end if
-
+#include source=$gatk_seqdict#
 #if $optional.sites_only_vcf_output
   $optional.sites_only_vcf_output
 #end if
@@ -518,6 +511,7 @@
     </section>
     <section expanded="False" name="common" title="Common Parameters">
       <expand macro="gatk_excl_ints"/>
+      <expand macro="seq_dict_sel"/>
       <param name="add_output_sam_program_record" argument="--add-output-sam-program-record" type="boolean" truevalue="--add-output-sam-program-record" falsevalue="" optional="true" checked="true" label="Add Output Sam Program Record" help="If true, adds a PG tag to created SAM/BAM/CRAM files."/>
       <param name="add_output_vcf_command_line" argument="--add-output-vcf-command-line" type="boolean" truevalue="--add-output-vcf-command-line" falsevalue="" optional="true" checked="true" label="Add Output Vcf Command Line" help="If true, adds a command line header line to created VCF files."/>
       <param name="disable_read_filter" argument="--disable-read-filter" type="text" optional="true" value="" label="Disable Read Filter" help="Read filters to be disabled before analysis"/>
@@ -530,14 +524,12 @@
       <param name="lenient" argument="--lenient" type="boolean" truevalue="--lenient" falsevalue="" optional="true" checked="false" label="Lenient" help="Lenient processing of VCF files"/>
       <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
       <param name="read_filter" argument="--read-filter" type="text" optional="true" value="" label="Read Filter" help="Read filters to be applied before analysis"/>
-      <param name="read_index" argument="--read-index" type="text" optional="true" value="" label="Read Index" help="Indices to use for the read inputs. If specified, an index must be provided for every read input and in the same order as the read inputs. If this argument is not specified, the path to the index for each input will be inferred automatically."/>
       <param name="read_validation_stringency" argument="--read-validation-stringency" type="select" optional="true" label="Read Validation Stringency" help="Validation stringency for all SAM/BAM/CRAM/SRA files read by this program.  The default stringency value SILENT can improve performance when processing a BAM file in which variable-length data (read, qualities, tags) do not otherwise need to be decoded.">
         <option selected="false" value="STRICT">STRICT</option>
         <option selected="false" value="LENIENT">LENIENT</option>
         <option selected="true" value="SILENT">SILENT</option>
       </param>
       <param name="seconds_between_progress_updates" argument="--seconds-between-progress-updates" type="float" optional="true" value="10.0" label="Seconds Between Progress Updates" help="Output traversal statistics every time this many seconds elapse"/>
-      <param name="sequence_dictionary" argument="--sequence-dictionary" type="text" optional="true" value="" label="Sequence Dictionary" help="Use the given sequence dictionary as the master/canonical sequence dictionary.  Must be a .dict file."/>
       <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)"/>
       <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)"/>
       <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
