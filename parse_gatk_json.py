@@ -12,7 +12,7 @@ import argparse
 import json
 import pypandoc
 
-VERSION="0.2.0"
+VERSION="0.3.0"
 
 def supply_args():
     parser = argparse.ArgumentParser(description='')
@@ -244,7 +244,9 @@ class Mappings(object):
                             'bam_output': 'bam',
                             }
 
-        self.out_create_params = {'create_output_bam_index': 'bai'}
+        # This is meant to be for those parameters that are booleans, but instruct for an output file to be created.
+        # This is a work in progress, will probably ignore these parameters for the time being.
+        self.out_create_params = {}
 
         self.gen_in_fmt = {'alleles': 'vcf',
                            'pedigree': 'tabular',
@@ -265,7 +267,8 @@ class Mappings(object):
                            'BAIT_INTERVALS': 'picard_interval_list',
                            'TARGET_INTERVALS': 'picard_interval_list',
                            'segments': 'tabular',
-                           'intervals': 'gatk_interval'
+                           'intervals': 'gatk_interval',
+                           'read_index': 'idx'
                            }
 
         # This is for the parameters in the XML
@@ -273,7 +276,9 @@ class Mappings(object):
                                    'intervals': ['gatk_ints'],
                                    'REFERENCE_SEQUENCE': ['ref_sel'],
                                    'REFERENCE': ['ref_sel'],
-                                   'reference': ['ref_sel']
+                                   'reference': ['ref_sel'],
+                                   'SEQUENCE_DICTIONARY': ['seq_dict_sel'],
+                                   'sequence_dictionary': ['seq_dict_sel']
                                    }
 
         # Template {<pname>: ((<main_chth>), (<pre_chth>))}
@@ -281,7 +286,9 @@ class Mappings(object):
                                     'intervals': ['gatk_ints_chth'],
                                     'REFERENCE_SEQUENCE': ['picard_ref_opts'],
                                     'REFERENCE': ['picard_ref_opts_plain'],
-                                    'reference': ['ref_opts']
+                                    'reference': ['ref_opts'],
+                                    'SEQUENCE_DICTIONARY': ['picard_seqdict_opts'],
+                                    'sequence_dictionary': ['gatk_seqdict']
                                     }
 
         self.param_to_macro_pretmpl = {'exclude_intervals': ['pre_gatk_excl_ints_chth'],
@@ -304,6 +311,7 @@ class Mappings(object):
         # Many parameters will take multiple Galaxy datatypes.  Providing a mapping will give flexibility to add or
         # subtract types when wanted.
         self.file_type_map = {'vcf': 'vcf,vcf_bgzip',
+                              'idx': 'tabix,bai',
                               'gatk_interval': 'gatk_interval,bed,vcf',
                               'sam': 'sam,bam',
                               'tabular': 'tabular'}
@@ -324,7 +332,10 @@ class Mappings(object):
 
         # For parameters we universally do not want to see in the UI.
         # interval_padding is taken care of any time we see an intervals parameter.
-        self.ignore_params = ('help', 'version', 'showHidden', 'interval_padding', 'interval_exclusion_padding', 'TMP_DIR')
+        self.ignore_params = ('help', 'version', 'showHidden', 'interval_padding', 'interval_exclusion_padding',
+                              'TMP_DIR',
+                              'create_output_bam_index', 'create_output_bam_md5', 'read_index',
+                              'create_output_variant_index', 'create_output_variant_md5')
 
     def map_lookup(self, val, dict):
         """
