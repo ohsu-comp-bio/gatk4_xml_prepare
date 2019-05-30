@@ -276,8 +276,25 @@
         </conditional>
     </xml>
 
+    <!--BAM input-->
+    <template name="picard_bam_input">
+        --INPUT input.bam
+    </template>
 
+    <template name="bam_index_pre_chth"><![CDATA[
+        #if $input.is_of_type("bam")
+            ln -s $input input.bam &&
+            samtools index input.bam &&
+        #else
+            ln -s $input input.sam &&
+            samtools view -bS input.sam -o input.bam &&
+            samtools index input.bam &&
+        #end if
+    ]]></template>
 
+    <xml name="gatk_bam_req_params">
+        <param name="input" type="data" format="bam,sam" label="Input BAM/SAM/CRAM file" />
+    </xml>
 
 
 
@@ -323,45 +340,17 @@
     <!--BAM should be indexed on the fly.-->
     <!--Parameter is required, so is not contained within a section.-->
     <!--Only decriptor that makes this unique for all input parameters is the summary field.-->
-    <xml name="gatk_bam_req_params">
-        <param name="input" type="data" format="bam,sam" label="Input BAM/SAM/CRAM file" />
-    </xml>
-
-    <template name="gatk_bam_req_chth">
-        --input input.bam
-    </template>
-
-    <template name="bam_index_pre_chth"><![CDATA[
-        #if $input.is_of_type("bam")
-            ln -s $input input.bam &&
-            samtools index input.bam &&
-        #else
-            ln -s $input input.sam &&
-            samtools view -bS input.sam -o input.bam &&
-            samtools index input.bam &&
-        #end if
-    ]]></template>
+     <!--{'pre_chth': ['bam_index_pre_chth'],-->
+                                                 <!--'main_chth': ['picard_bam_input'],-->
+                                                 <!--'main_xml': ['gatk_bam_req_params']}},-->
 
 
 
 
 
 
-    <!--Picard tool BAM input-->
-    <template name="picard_bam_input">
-        --INPUT input.bam
-    </template>
 
-    <template name="picard_bam_index"><![CDATA[
-        #if $input.is_of_type("bam")
-            ln -s $INPUT input.bam &&
-            samtools index input.bam &&
-        #else
-            ln -s $INPUT input.sam &&
-            samtools view -bS input.sam -o input.bam &&
-            samtools index input.bam &&
-        #end if
-    ]]></template>
+
 
 
     <!--Macros for multiple input tools.  List[File] in GATK json.-->

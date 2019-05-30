@@ -93,149 +93,6 @@ class Mappings(object):
         # One challenge with this is the macros would have to either be prebuilt with the necessary section variable, or
         # would have to be rewritten on the fly.
 
-        # self.tool_data = {'SortVcf':
-        #                       {'output_fmt': {},
-        #                        'pre_tmpls': ['vcf_tabix_multi'],
-        #                        'post_tmpls': ['picard_opts', 'picard_vcf_output_opts', 'vcf_input_multi', 'picard_ref_opts_opt', 'picard_seqdict_opts'],
-        #                        'pre_params': ['gzip_vcf_params', 'vcf_input_params_multi'],
-        #                        'opt_params': ['ref_sel', 'seq_dict_sel'],
-        #                        'post_params': ['picard_params'],
-        #                        'output_params': ['gzip_vcf_output_params', 'picard_output_params']},
-        #                   'GenotypeGVCFs':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['gatk_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_ints', 'gatk_vcf_input_params',
-        #                                       'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'CombineGVCFs':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['gatk_tabix_multi', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input_multi', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_vcf_input_params_multi', 'gatk_ints', 'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'HaplotypeCaller':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints', 'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'SelectVariants':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['gatk_tabix', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts', 'vcf_output_opts', 'gatk_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gzip_vcf_params', 'gatk_vcf_input_params', 'gatk_ints', 'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'CollectReadCounts':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts_opt', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth', 'hdf5_output_chth'],
-        #                        'pre_params': ['gatk_req_params', 'gatk_ints', 'gatk_excl_ints'],
-        #                        'opt_params': ['ref_sel'],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['hdf5_output']},
-        #                   'PlotDenoisedCopyRatios':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints',
-        #                                       'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'ModelSegments':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': [],
-        #                        'post_tmpls': ['modelsegments_chth'],
-        #                        'pre_params': [],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['modelsegments_output']},
-        #                   'CallCopyRatioSegments':
-        #                       {'output_fmt': {'output': 'tabular'},
-        #                        'input_fmt': {'input': 'tabular'},
-        #                        'pre_tmpls': [],
-        #                        'post_tmpls': [],
-        #                        'pre_params': [],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': []},
-        #                   'PlotModeledSegments':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': [],
-        #                        'post_tmpls': ['plotmodeledsegments_chth', 'gatk_seqdict'],
-        #                        'pre_params': ['seq_dict_sel'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['plotmodeledsegments_output']},
-        #                   'CollectAllelicCounts':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': ['bam_index', 'pre_gatk_ints_chth', 'pre_gatk_excl_ints_chth'],
-        #                        'post_tmpls': ['ref_opts_opt', 'vcf_output_opts', 'gatk_bam_input', 'gatk_ints_chth', 'gatk_excl_ints_chth'],
-        #                        'pre_params': ['ref_sel', 'gatk_req_params', 'gzip_vcf_params', 'gatk_ints', 'gatk_excl_ints'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': ['gzip_vcf_output_params']},
-        #                   'DenoiseReadCounts':
-        #                       {'output_fmt': {'denoised_copy_ratios': 'tabular',
-        #                                       'standardized_copy_ratios': 'tabular'},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': [],
-        #                        'post_tmpls': ['hdf5_input_chth'],
-        #                        'pre_params': ['hdf5_input'],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': []},
-        #                   'CollectHsMetrics':
-        #                       {'output_fmt': {'OUTPUT': 'tabular'},
-        #                        'input_fmt': {'INPUT': 'sam,bam'},
-        #                        'pre_tmpls': ['picard_bam_index'],
-        #                        'post_tmpls': ['picard_opts'],
-        #                        'pre_params': [],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': ['picard_params'],
-        #                        'output_params': []},
-        #                   'Mutect2':
-        #                       {'output_fmt': {},
-        #                        'input_fmt': {},
-        #                        'pre_tmpls': [],
-        #                        'post_tmpls': [],
-        #                        'pre_params': [],
-        #                        'opt_params': [],
-        #                        'adv_params': [],
-        #                        'post_params': [],
-        #                        'output_params': []}
-        #                   }
-
 
         # For a parameter to be included here, it must have a consistent file format throughout all GATK4 JSONs.
         # Otherwise, this will need to be specified as a macro, and macro will need to be connected to tool.
@@ -320,21 +177,29 @@ class Mappings(object):
         # Relate tool name to a common argument name, such as input (which can be connected to different file types),
         # and a file type.
         self.tool_file_type = {'Mutect2': {'input': 'sam'},
-                               'SortSam': {'INPUT': 'sam'}}
+                               'SortSam': {'INPUT': 'sam'},
+                               'IntervalListToBed': {'INPUT': 'picard_interval_list'}}
         self.tool_output_file_type = {'Mutect2': {'output': 'vcf'},
-                                      'SortSam': {'OUTPUT': 'sam'}}
+                                      'SortSam': {'OUTPUT': 'sam'},
+                                      'IntervalListToBed': {'OUTPUT': 'bed'}}
 
         # Relate the name of the argument to the selection of macros that goes with it.
         self.macro_to_param = {'input': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['gatk_bam_req_chth'],
                                                  'main_xml': ['gatk_bam_req_params']}},
-                               'INPUT': {'sam': {'pre_chth': ['picard_bam_index'],
+                               'INPUT': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['picard_bam_input'],
-                                                 'main_xml': ['gatk_bam_req_params']}},
+                                                 'main_xml': ['gatk_bam_req_params']},
+                                         'picard_interval_list': {'pre_chth': [],
+                                                                  'main_chth': [],
+                                                                  'main_xml': []}},
                                'output': {'vcf': {'main_chth': ['vcf_output_opts'],
                                                   'main_xml': ['gzip_vcf_params'],
                                                   'out_xml': ['gzip_vcf_output_params']}},
                                'OUTPUT': {'sam': {'main_chth': [],
+                                                  'main_xml': [],
+                                                  'out_xml': []},
+                                          'bed': {'main_chth': [],
                                                   'main_xml': [],
                                                   'out_xml': []}}
                                }
@@ -863,7 +728,10 @@ class JsonXml(Mappings, XmlTemplates):
                 return None
         elif self.is_input:
             if self.pname in self.tool_file_type[self.tool_name]:
-                return self.file_type_map[self.tool_file_type[self.tool_name][self.pname]]
+                try:
+                    return self.file_type_map[self.tool_file_type[self.tool_name][self.pname]]
+                except:
+                    return self.tool_file_type[self.tool_name][self.pname]
             # if self.pname in self.tool_data[self.tool_name]['input_fmt']:
             #     return self.tool_data[self.tool_name]['input_fmt'][self.pname]
             elif self.pname in self.gen_in_fmt:
