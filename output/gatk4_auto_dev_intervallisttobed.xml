@@ -1,0 +1,105 @@
+<tool id="gatk4_auto_dev_intervallisttobed" name="GATK4 AUTO IntervalListToBed (Picard)" profile="18.05" version="@WRAPPER_VERSION@0">
+  <description>- Converts an Picard IntervalList file to a BED file.</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements"/>
+  <expand macro="version_cmd"/>
+  <command detect_errors="exit_code"><![CDATA[#include source=$set_sections#
+@CMD_BEGIN@ IntervalListToBed
+#if $optional.arguments_file
+  --arguments_file $optional.arguments_file
+#end if
+
+#if $common.COMPRESSION_LEVEL
+  --COMPRESSION_LEVEL $common.COMPRESSION_LEVEL
+#end if
+
+#if $common.CREATE_INDEX
+  $common.CREATE_INDEX
+#end if
+
+#if $common.CREATE_MD5_FILE
+  $common.CREATE_MD5_FILE
+#end if
+
+#if $common.GA4GH_CLIENT_SECRETS
+  --GA4GH_CLIENT_SECRETS $common.GA4GH_CLIENT_SECRETS
+#end if
+
+--INPUT $INPUT
+#if $common.MAX_RECORDS_IN_RAM
+  --MAX_RECORDS_IN_RAM $common.MAX_RECORDS_IN_RAM
+#end if
+
+--OUTPUT $OUTPUT
+#if $common.QUIET
+  $common.QUIET
+#end if
+
+#include source=$picard_ref_opts#
+#if $optional.SCORE
+  --SCORE $optional.SCORE
+#end if
+
+#if $optional.SORT
+  $optional.SORT
+#end if
+
+#if $common.USE_JDK_DEFLATER
+  $common.USE_JDK_DEFLATER
+#end if
+
+#if $common.USE_JDK_INFLATER
+  $common.USE_JDK_INFLATER
+#end if
+
+#if $common.VALIDATION_STRINGENCY
+  --VALIDATION_STRINGENCY $common.VALIDATION_STRINGENCY
+#end if
+
+#if $common.VERBOSITY
+  --VERBOSITY $common.VERBOSITY
+#end if
+]]></command>
+  <inputs>
+    <param name="INPUT" argument="--INPUT" type="data" optional="false" format="picard_interval_list" label="Input" help="Input IntervalList file."/>
+    <section expanded="False" name="optional" title="Optional Parameters">
+      <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="txt" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
+      <param name="SCORE" argument="--SCORE" type="integer" optional="true" value="500" label="Score" help="The score, between 0-1000, to output for each interval in the BED file."/>
+      <param name="SORT" argument="--SORT" type="boolean" truevalue="--SORT" falsevalue="" optional="true" checked="true" label="Sort" help="If true, sort the interval list prior to outputting as BED file."/>
+    </section>
+    <section expanded="False" name="common" title="Common Parameters">
+      <expand macro="ref_sel"/>
+      <param name="COMPRESSION_LEVEL" argument="--COMPRESSION_LEVEL" type="integer" optional="true" value="5" label="Compression_Level" help="Compression level for all compressed files created (e.g. BAM and VCF)."/>
+      <param name="CREATE_INDEX" argument="--CREATE_INDEX" type="boolean" truevalue="--CREATE_INDEX" falsevalue="" optional="true" checked="false" label="Create_Index" help="Whether to create a BAM index when writing a coordinate-sorted BAM file."/>
+      <param name="CREATE_MD5_FILE" argument="--CREATE_MD5_FILE" type="boolean" truevalue="--CREATE_MD5_FILE" falsevalue="" optional="true" checked="false" label="Create_Md5_File" help="Whether to create an MD5 digest for any BAM or FASTQ files created.  "/>
+      <param name="GA4GH_CLIENT_SECRETS" argument="--GA4GH_CLIENT_SECRETS" type="text" optional="true" value="client_secrets.json" label="Ga4Gh_Client_Secrets" help="Google Genomics API client_secrets.json file path."/>
+      <param name="MAX_RECORDS_IN_RAM" argument="--MAX_RECORDS_IN_RAM" type="integer" optional="true" value="500000" label="Max_Records_In_Ram" help="When writing files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort the file, and increases the amount of RAM needed."/>
+      <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
+      <param name="USE_JDK_DEFLATER" argument="--USE_JDK_DEFLATER" type="boolean" truevalue="--USE_JDK_DEFLATER" falsevalue="" optional="true" checked="false" label="Use_Jdk_Deflater" help="Use the JDK Deflater instead of the Intel Deflater for writing compressed output"/>
+      <param name="USE_JDK_INFLATER" argument="--USE_JDK_INFLATER" type="boolean" truevalue="--USE_JDK_INFLATER" falsevalue="" optional="true" checked="false" label="Use_Jdk_Inflater" help="Use the JDK Inflater instead of the Intel Inflater for reading compressed input"/>
+      <param name="VALIDATION_STRINGENCY" argument="--VALIDATION_STRINGENCY" type="select" optional="true" label="Validation_Stringency" help="Validation stringency for all SAM files read by this program.  Setting stringency to SILENT can improve performance when processing a BAM file in which variable-length data (read, qualities, tags) do not otherwise need to be decoded.">
+        <option selected="true" value="STRICT">STRICT</option>
+        <option selected="false" value="LENIENT">LENIENT</option>
+        <option selected="false" value="SILENT">SILENT</option>
+      </param>
+      <param name="VERBOSITY" argument="--VERBOSITY" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
+        <option selected="false" value="ERROR">ERROR</option>
+        <option selected="false" value="WARNING">WARNING</option>
+        <option selected="true" value="INFO">INFO</option>
+        <option selected="false" value="DEBUG">DEBUG</option>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+    <data format="bed" name="OUTPUT" label="${tool.name} on ${on_string}: OUTPUT bed" help="Output BED file."/>
+  </outputs>
+  <tests/>
+  <help><![CDATA[Trivially simple command line program to convert an IntervalList file to
+a BED file.
+]]></help>
+  <citations>
+    <expand macro="citations"/>
+  </citations>
+</tool>
