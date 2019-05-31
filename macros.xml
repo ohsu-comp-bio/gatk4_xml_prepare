@@ -51,7 +51,7 @@
     <template name="ref_opts">
     #for $sect in $sections
         #if $varExists($sect + "reference_source.reference_source_selector")
-            #if $sect + "reference_source.reference_source_selector" != "no_ref"
+            #if $getVar($sect + "reference_source.reference_source_selector") != "no_ref"
                 #if $getVar($sect + "reference_source.reference_source_selector") != "history"
                     --reference $getVar($sect + "reference_source.reference_sequence.fields.path")
                 #else
@@ -65,7 +65,7 @@
     <template name="picard_ref_opts">
     #for $sect in $sections
         #if $varExists($sect + "reference_source.reference_source_selector")
-            #if $sect + "reference_source.reference_source_selector" != "no_ref"
+            #if $getVar($sect + "reference_source.reference_source_selector") != "no_ref"
                 #if $getVar($sect + "reference_source.reference_source_selector") != "history"
                     --REFERENCE_SEQUENCE $getVar($sect + "reference_source.reference_sequence.fields.path")
                 #else
@@ -281,6 +281,10 @@
         --INPUT input.bam
     </template>
 
+    <template name="gatk_bam_input">
+        --input input.bam
+    </template>
+
     <template name="bam_index_pre_chth"><![CDATA[
         #if $input.is_of_type("bam")
             ln -s $input input.bam &&
@@ -296,6 +300,16 @@
         <param name="input" type="data" format="bam,sam" label="Input BAM/SAM/CRAM file" />
     </xml>
 
+    <template name="picard_bam_index"><![CDATA[
+        #if $input.is_of_type("bam")
+            ln -s $INPUT input.bam &&
+            samtools index input.bam &&
+        #else
+            ln -s $INPUT input.sam &&
+            samtools view -bS input.sam -o input.bam &&
+            samtools index input.bam &&
+        #end if
+    ]]></template>
 
 
 
@@ -343,6 +357,9 @@
      <!--{'pre_chth': ['bam_index_pre_chth'],-->
                                                  <!--'main_chth': ['picard_bam_input'],-->
                                                  <!--'main_xml': ['gatk_bam_req_params']}},-->
+
+
+
 
 
 
