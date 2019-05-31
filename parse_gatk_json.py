@@ -12,7 +12,7 @@ import argparse
 import json
 import pypandoc
 
-VERSION="0.3.0"
+VERSION="0.3.1"
 
 def supply_args():
     parser = argparse.ArgumentParser(description='')
@@ -58,6 +58,7 @@ class Mappings(object):
                              'List[Integer]': 'integer',
                              'List[String]': 'text',
                              'List[Type]': 'text',
+                             'List[FeatureInput[Feature]]': 'data',
                              'List[FeatureInput[VariantContext]]': 'data',
                              'ArrayList[String]': 'text',
                              'FeatureInput[VariantContext]': 'data',
@@ -107,6 +108,7 @@ class Mappings(object):
         self.out_create_params = {}
 
         self.gen_in_fmt = {'alleles': 'vcf',
+                           'known_sites': 'vcf',
                            'pedigree': 'tabular',
                            'population_callset': 'vcf',
                            'panel_of_normals': 'vcf',
@@ -172,36 +174,30 @@ class Mappings(object):
                               'idx': 'tabix,bai',
                               'gatk_interval': 'gatk_interval,bed,vcf',
                               'sam': 'sam,bam',
+                              'picard_interval_list': 'picard_interval_list,tabular',
                               'tabular': 'tabular'}
 
         # Relate tool name to a common argument name, such as input (which can be connected to different file types),
         # and a file type.
-        self.tool_file_type = {'Mutect2': {'input': 'sam'},
+        self.tool_file_type = {'BaseRecalibrator': {'input': 'sam'},
+                               'Mutect2': {'input': 'sam'},
                                'SortSam': {'INPUT': 'sam'},
                                'IntervalListToBed': {'INPUT': 'picard_interval_list'}}
-        self.tool_output_file_type = {'Mutect2': {'output': 'vcf'},
+        self.tool_output_file_type = {'BaseRecalibrator': {'output': 'gatk_recal'},
+                                      'Mutect2': {'output': 'vcf'},
                                       'SortSam': {'OUTPUT': 'sam'},
                                       'IntervalListToBed': {'OUTPUT': 'bed'}}
 
         # Relate the name of the argument to the selection of macros that goes with it.
         self.macro_to_param = {'input': {'sam': {'pre_chth': ['bam_index_pre_chth'],
-                                                 'main_chth': ['gatk_bam_req_chth'],
+                                                 'main_chth': ['gatk_bam_input'],
                                                  'main_xml': ['gatk_bam_req_params']}},
                                'INPUT': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['picard_bam_input'],
-                                                 'main_xml': ['gatk_bam_req_params']},
-                                         'picard_interval_list': {'pre_chth': [],
-                                                                  'main_chth': [],
-                                                                  'main_xml': []}},
+                                                 'main_xml': ['gatk_bam_req_params']}},
                                'output': {'vcf': {'main_chth': ['vcf_output_opts'],
                                                   'main_xml': ['gzip_vcf_params'],
-                                                  'out_xml': ['gzip_vcf_output_params']}},
-                               'OUTPUT': {'sam': {'main_chth': [],
-                                                  'main_xml': [],
-                                                  'out_xml': []},
-                                          'bed': {'main_chth': [],
-                                                  'main_xml': [],
-                                                  'out_xml': []}}
+                                                  'out_xml': ['gzip_vcf_output_params']}}
                                }
 
         # For parameters we universally do not want to see in the UI.
@@ -238,6 +234,13 @@ class XmlTemplates(object):
                                           '\n%argument %name.vcf'
                                           '\n#end if'
                                           '\n#end if')
+        self.vcf_choose_req = PercentTemplate('#if $%name'
+                                          '\n#if $%name.is_of_type("vcf_bgzip")'
+                                          '\n%argument %name.vcf.gz'
+                                          '\n#else'
+                                          '\n%argument %name.vcf'
+                                          '\n#end if'
+                                          '\n#end if')
         self.vcf_tabix = PercentTemplate('#if $%section.%name'
                                          '\n#set datatype = $%section.%name.datatype'
                                          '\n#if $%section.%name.is_of_type("vcf_bgzip")'
@@ -245,6 +248,15 @@ class XmlTemplates(object):
                                          '\ntabix %name.vcf.gz &&'
                                          '\n#else'
                                          '\nln -s $%section.%name %name.vcf &&'
+                                         '\n#end if'
+                                         '\n#end if')
+        self.vcf_tabix_req = PercentTemplate('#if $%name'
+                                         '\n#set datatype = $%name.datatype'
+                                         '\n#if $%name.is_of_type("vcf_bgzip")'
+                                         '\nln -s $%name %name.vcf.gz &&'
+                                         '\ntabix %name.vcf.gz &&'
+                                         '\n#else'
+                                         '\nln -s $%name %name.vcf &&'
                                          '\n#end if'
                                          '\n#end if')
         self.file_chth = PercentTemplate('#if $%section.%out_sel_name\n%argument $%name\n#end if')
@@ -278,7 +290,8 @@ class CheetahPrep(XmlTemplates):
     Need pname, macro name
 
     """
-    def __init__(self, pname, argname, section, is_req=False, mname=None, pre_mname=None, is_bool=False, out_sel_name=None):
+    def __init__(self, pname, argname, section, is_req=False, is_input_vcf=False, mname=None, pre_mname=None,
+                 is_bool=False, out_sel_name=None):
         XmlTemplates.__init__(self)
         # Output is required, and there is a macro in my_xml.macros_tmpl.
 
@@ -288,6 +301,7 @@ class CheetahPrep(XmlTemplates):
         self.mname = mname
         self.pre_mname = pre_mname
         self.is_req = is_req
+        self.is_input_vcf = is_input_vcf
         self.is_bool = is_bool
         self.out_sel_name = out_sel_name
 
@@ -306,6 +320,18 @@ class CheetahPrep(XmlTemplates):
         Logic to decide which Cheetah template to return.
         :return:
         """
+        if self.is_input_vcf and not self.is_req and not self.pre_mname:
+            return self.vcf_choose.substitute(section=self.section, name=self.pname, argument=self.argname)
+
+        if self.is_input_vcf and self.is_req and not self.pre_mname:
+            return self.vcf_choose_req.substitute(section=self.section, name=self.pname, argument=self.argname)
+
+        if self.is_input_vcf and not self.is_req and self.pre_mname:
+            return self.vcf_tabix.substitute(name=self.pname)
+
+        if self.is_input_vcf and self.is_req and self.pre_mname:
+            return self.vcf_tabix_req.substitute(name=self.pname)
+
         if self.is_req and self.mname and not self.pre_mname:
             return self.chth_tmpl.substitute(macro=self.mname)
 
@@ -444,11 +470,6 @@ class JsonXml(Mappings, XmlTemplates):
         else:
             self.is_bool = False
 
-        # if self.pname in self.gen_in_fmt:
-        #     self.is_input_vcf = self.is_input and self.gen_in_fmt[self.pname] == 'vcf,vcf_bgzip'
-        # else:
-        #     self.is_input_vcf = None
-
         # Set to common if this argument is seen inside the known common arguments.
         # self.common = self.pname not in self.tool_data[self.tool_name]['output_fmt'] and \
         #               self.pname not in self.tool_data[self.tool_name]['input_fmt']
@@ -467,12 +488,16 @@ class JsonXml(Mappings, XmlTemplates):
             self.is_select = False
             self.sel_blob = None
 
-        self.is_input_vcf = None
-
         self.macros = {'main_chth': [],
                        'pre_chth': [],
                        'main_xml': [],
                        'out_xml': []}
+
+        if self.pname in self.gen_in_fmt:
+            self.is_input_vcf = self.is_input and self.gen_in_fmt[self.pname] == 'vcf'
+        else:
+            self.is_input_vcf = False
+
 
         # self.chth_pre = self.macros['pre_chth']
 
@@ -480,21 +505,31 @@ class JsonXml(Mappings, XmlTemplates):
         if self.tool_name in self.tool_file_type:
             if self.pname in self.tool_file_type[self.tool_name]:
                 self.input_type = self.tool_file_type[self.tool_name][self.pname]
-                self._macro_update(self.macro_to_param[self.pname][self.input_type])
+                try:
+                    self._macro_update(self.macro_to_param[self.pname][self.input_type])
+                except:
+                    pass
             elif self.pname in self.tool_output_file_type[self.tool_name]:
                 self.output_type = self.tool_output_file_type[self.tool_name][self.pname]
-                self._macro_update(self.macro_to_param[self.pname][self.output_type])
+                try:
+                    self._macro_update(self.macro_to_param[self.pname][self.output_type])
+                except:
+                    pass
 
+        macros_xml = None
         if self.pname in self.param_to_macro_xml:
             macros_xml = self.param_to_macro_xml[self.pname]
         elif self.pname in self.macro_to_param and self.is_input:
             self.raw_format = self.tool_file_type[self.tool_name][self.pname]
-            macros_xml = self.macro_to_param[self.pname][self.raw_format]["main_xml"]
+            if self.raw_format in self.macro_to_param[self.pname]:
+                macros_xml = self.macro_to_param[self.pname][self.raw_format]["main_xml"]
         elif self.pname in self.macro_to_param and self.is_output:
             self.raw_format = self.tool_output_file_type[self.tool_name][self.pname]
-            macros_xml = self.macro_to_param[self.pname][self.raw_format]["main_xml"]
+            if self.raw_format in self.macro_to_param[self.pname]:
+                macros_xml = self.macro_to_param[self.pname][self.raw_format]["main_xml"]
         else:
             macros_xml = None
+
         if macros_xml:
             self.macros['main_xml'].extend(macros_xml)
 
@@ -512,15 +547,23 @@ class JsonXml(Mappings, XmlTemplates):
         self.chth = []
         if self.macros['main_chth']:
             for macro in self.macros['main_chth']:
-                self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, mname=macro, is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
+                self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, self.is_input_vcf,
+                                             mname=macro, is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
         else:
-            self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, mname=None,
-                                         is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
+            self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, self.is_input_vcf,
+                                         mname=None, is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
 
         self.chth_pre = []
         if self.macros['pre_chth']:
             for macro in self.macros['pre_chth']:
-                self.chth_pre.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, pre_mname=macro, is_bool=self.is_bool).chth)
+                self.chth_pre.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req,
+                                                 self.is_input_vcf, pre_mname=macro, is_bool=self.is_bool).chth)
+
+        if self.is_input_vcf:
+            self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req,
+                                             self.is_input_vcf).chth)
+            self.chth_pre.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req,
+                                             self.is_input_vcf, pre_mname=True).chth)
 
         # Fill in XML tags to dict.
         if self.is_output:
