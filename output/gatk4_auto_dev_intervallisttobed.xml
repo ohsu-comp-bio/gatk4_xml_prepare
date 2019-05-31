@@ -63,7 +63,7 @@
 #end if
 ]]></command>
   <inputs>
-    <param name="INPUT" argument="--INPUT" type="data" optional="false" format="picard_interval_list" label="Input" help="Input IntervalList file."/>
+    <param name="INPUT" argument="--INPUT" type="data" optional="false" format="picard_interval_list,tabular" label="Input" help="Input IntervalList file."/>
     <section expanded="False" name="optional" title="Optional Parameters">
       <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="txt" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
       <param name="SCORE" argument="--SCORE" type="integer" optional="true" value="500" label="Score" help="The score, between 0-1000, to output for each interval in the BED file."/>
