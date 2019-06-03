@@ -1,0 +1,99 @@
+<tool id="gatk4_auto_dev_convertheaderlesshadoopbamshardtobam" name="GATK4 AUTO ConvertHeaderlessHadoopBamShardToBam" profile="18.05" version="@WRAPPER_VERSION@0">
+  <description>- Convert a headerless BAM shard into a readable BAM</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements"/>
+  <expand macro="version_cmd"/>
+  <command detect_errors="exit_code"><![CDATA[#include source=$set_sections#
+@CMD_BEGIN@ ConvertHeaderlessHadoopBamShardToBam
+#if $optional.arguments_file
+  --arguments_file $optional.arguments_file
+#end if
+
+--bam-shard $bam_shard
+--bam-with-header $bam_with_header
+#if $common.gatk_config_file
+  --gatk-config-file $common.gatk_config_file
+#end if
+
+#if $optional.gcs_max_retries
+  --gcs-max-retries $optional.gcs_max_retries
+#end if
+
+--output $output
+#if $common.QUIET
+  $common.QUIET
+#end if
+
+#if $common.use_jdk_deflater
+  $common.use_jdk_deflater
+#end if
+
+#if $common.use_jdk_inflater
+  $common.use_jdk_inflater
+#end if
+
+#if $common.verbosity
+  --verbosity $common.verbosity
+#end if
+]]></command>
+  <inputs>
+    <param name="bam_shard" argument="--bam-shard" type="data" optional="false" format="data" label="Bam Shard" help="Headerless Hadoop BAM shard to be converted into a readable BAM"/>
+    <param name="bam_with_header" argument="--bam-with-header" type="data" optional="false" format="sam,bam" label="Bam With Header" help="Well-formed BAM whose header to use for the converted fragment"/>
+    <section expanded="False" name="optional" title="Optional Parameters">
+      <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="txt" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
+      <param name="gcs_max_retries" argument="--gcs-max-retries" type="integer" optional="true" value="20" label="Gcs Max Retries" help="If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection"/>
+    </section>
+    <section expanded="False" name="common" title="Common Parameters">
+      <param name="gatk_config_file" argument="--gatk-config-file" type="data" optional="true" format="txt" label="Gatk Config File" help="A configuration file to use with the GATK."/>
+      <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
+      <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)"/>
+      <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)"/>
+      <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
+        <option selected="false" value="ERROR">ERROR</option>
+        <option selected="false" value="WARNING">WARNING</option>
+        <option selected="true" value="INFO">INFO</option>
+        <option selected="false" value="DEBUG">DEBUG</option>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+    <data format="sam" name="output" label="${tool.name} on ${on_string}: output sam" help="Location to write the converted BAM shard"/>
+  </outputs>
+  <tests/>
+  <help><![CDATA[This is a troubleshooting utility that converts a headerless BAM shard
+(e.g., a part-r-00000.bam, part-r-00001.bam, etc.), produced by a Spark
+tool with --sharded-output set to true, into a readable BAM file by
+adding a header and a BGZF terminator.
+
+This tool is not intended for use with BAM shards that already have a
+header -- these shards are already readable using samtools.
+
+Input
+~~~~~
+
+-  A headerless BAM shard
+-  A well-formed BAM whose header will be used for the converted
+   fragment
+
+Output
+~~~~~~
+
+-  The converted BAM shard
+
+Usage example
+~~~~~~~~~~~~~
+
+::
+
+    gatk ConvertHeaderlessHadoopBamShardToBam \
+        --bam-shard part-r-00000.bam \
+        --bam-with-header input.bam \
+        -O output.bam
+    
+]]></help>
+  <citations>
+    <expand macro="citations"/>
+  </citations>
+</tool>

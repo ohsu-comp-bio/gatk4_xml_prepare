@@ -1,0 +1,96 @@
+<tool id="gatk4_auto_dev_indexfeaturefile" name="GATK4 AUTO IndexFeatureFile" profile="18.05" version="@WRAPPER_VERSION@0">
+  <description>- Creates an index for a feature file, e.g. VCF or BED file.</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements"/>
+  <expand macro="version_cmd"/>
+  <command detect_errors="exit_code"><![CDATA[#include source=$set_sections#
+#if $feature_file
+#set datatype = $feature_file.datatype
+#if $feature_file.is_of_type("vcf_bgzip")
+ln -s $feature_file feature_file.vcf.gz &&
+tabix feature_file.vcf.gz &&
+#else
+ln -s $feature_file feature_file.vcf &&
+#end if
+#end if
+@CMD_BEGIN@ IndexFeatureFile
+#if $optional.arguments_file
+  --arguments_file $optional.arguments_file
+#end if
+
+#if $feature_file
+#if $feature_file.is_of_type("vcf_bgzip")
+--feature-file feature_file.vcf.gz
+#else
+--feature-file feature_file.vcf
+#end if
+#end if
+#if $common.gatk_config_file
+  --gatk-config-file $common.gatk_config_file
+#end if
+
+#if $optional.gcs_max_retries
+  --gcs-max-retries $optional.gcs_max_retries
+#end if
+
+--output $output
+#if $common.QUIET
+  $common.QUIET
+#end if
+
+#if $common.use_jdk_deflater
+  $common.use_jdk_deflater
+#end if
+
+#if $common.use_jdk_inflater
+  $common.use_jdk_inflater
+#end if
+
+#if $common.verbosity
+  --verbosity $common.verbosity
+#end if
+]]></command>
+  <inputs>
+    <param name="feature_file" argument="--feature-file" type="data" optional="false" format="vcf,vcf_bgzip" label="Feature File" help="Feature file (eg., VCF or BED file) to index. Must be in a tribble-supported format"/>
+    <section expanded="False" name="optional" title="Optional Parameters">
+      <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="txt" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
+      <param name="gcs_max_retries" argument="--gcs-max-retries" type="integer" optional="true" value="20" label="Gcs Max Retries" help="If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection"/>
+    </section>
+    <section expanded="False" name="common" title="Common Parameters">
+      <param name="gatk_config_file" argument="--gatk-config-file" type="data" optional="true" format="txt" label="Gatk Config File" help="A configuration file to use with the GATK."/>
+      <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
+      <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)"/>
+      <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)"/>
+      <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
+        <option selected="false" value="ERROR">ERROR</option>
+        <option selected="false" value="WARNING">WARNING</option>
+        <option selected="true" value="INFO">INFO</option>
+        <option selected="false" value="DEBUG">DEBUG</option>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+    <data format="data" name="output" label="${tool.name} on ${on_string}: output data" help="The output index file. If missing, the tool will create an index file in the same directory as the input file."/>
+  </outputs>
+  <tests/>
+  <help><![CDATA[This tool creates an index file for the various kinds of
+feature-containing files supported by GATK (such as VCF and BED files).
+An index allows querying features by a genomic interval.
+
+Usage example
+~~~~~~~~~~~~~
+
+::
+
+    gatk IndexFeatureFile \
+        -F cohort.vcf.gz
+    
+
+This produces the corresponding index, cohort.vcf.gz.tbi.
+]]></help>
+  <citations>
+    <expand macro="citations"/>
+  </citations>
+</tool>

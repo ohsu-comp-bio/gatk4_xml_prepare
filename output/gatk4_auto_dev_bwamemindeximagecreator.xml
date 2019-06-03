@@ -1,0 +1,92 @@
+<tool id="gatk4_auto_dev_bwamemindeximagecreator" name="GATK4 AUTO BwaMemIndexImageCreator" profile="18.05" version="@WRAPPER_VERSION@0">
+  <description>- Create a BWA-MEM index image file for use with GATK BWA tools</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements"/>
+  <expand macro="version_cmd"/>
+  <command detect_errors="exit_code"><![CDATA[#include source=$set_sections#
+@CMD_BEGIN@ BwaMemIndexImageCreator
+#if $optional.arguments_file
+  --arguments_file $optional.arguments_file
+#end if
+
+#if $common.gatk_config_file
+  --gatk-config-file $common.gatk_config_file
+#end if
+
+#if $optional.gcs_max_retries
+  --gcs-max-retries $optional.gcs_max_retries
+#end if
+
+#include source=$ref_opts_input#
+--output $output
+#if $common.QUIET
+  $common.QUIET
+#end if
+
+#if $common.use_jdk_deflater
+  $common.use_jdk_deflater
+#end if
+
+#if $common.use_jdk_inflater
+  $common.use_jdk_inflater
+#end if
+
+#if $common.verbosity
+  --verbosity $common.verbosity
+#end if
+]]></command>
+  <inputs>
+    <expand macro="ref_sel"/>
+    <section expanded="False" name="optional" title="Optional Parameters">
+      <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="txt" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
+      <param name="gcs_max_retries" argument="--gcs-max-retries" type="integer" optional="true" value="20" label="Gcs Max Retries" help="If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection"/>
+    </section>
+    <section expanded="False" name="common" title="Common Parameters">
+      <param name="gatk_config_file" argument="--gatk-config-file" type="data" optional="true" format="txt" label="Gatk Config File" help="A configuration file to use with the GATK."/>
+      <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
+      <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)"/>
+      <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)"/>
+      <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
+        <option selected="false" value="ERROR">ERROR</option>
+        <option selected="false" value="WARNING">WARNING</option>
+        <option selected="true" value="INFO">INFO</option>
+        <option selected="false" value="DEBUG">DEBUG</option>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+    <data format="data" name="output" label="${tool.name} on ${on_string}: output data" help="Output reference index image file (ending in &amp;quot;.img&amp;quot;)."/>
+  </outputs>
+  <tests/>
+  <help><![CDATA[Create a BWA-MEM index image file for use with GATK BWA tools
+
+Tools that utilize BWA-MEM (e.g. BwaSpark, PathSeqBwaSpark) require an
+index image file of the reference sequences. This tool generates the
+image file from a reference FASTA file.
+
+Input
+~~~~~
+
+-  Reference FASTA file
+
+Output
+^^^^^^
+
+-  BWA-MEM index image file of the reference
+
+Usage example
+~~~~~~~~~~~~~
+
+::
+
+    gatk BwaMemIndexImageCreator \
+        -I reference.fasta \
+        -O reference.fasta.img
+    
+]]></help>
+  <citations>
+    <expand macro="citations"/>
+  </citations>
+</tool>

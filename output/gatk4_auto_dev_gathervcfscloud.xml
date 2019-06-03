@@ -1,0 +1,144 @@
+<tool id="gatk4_auto_dev_gathervcfscloud" name="GATK4 AUTO GatherVcfsCloud" profile="18.05" version="@WRAPPER_VERSION@0">
+  <description>- Gathers multiple VCF files from a scatter operation into a single VCF file</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements"/>
+  <expand macro="version_cmd"/>
+  <command detect_errors="exit_code"><![CDATA[#include source=$set_sections#
+@CMD_BEGIN@ GatherVcfsCloud
+#if $optional.arguments_file
+  --arguments_file $optional.arguments_file
+#end if
+
+#if $optional.cloud_prefetch_buffer
+  --cloud-prefetch-buffer $optional.cloud_prefetch_buffer
+#end if
+
+#if $advanced.disable_contig_ordering_check
+  $advanced.disable_contig_ordering_check
+#end if
+
+#if $optional.gather_type
+  --gather-type $optional.gather_type
+#end if
+
+#if $common.gatk_config_file
+  --gatk-config-file $common.gatk_config_file
+#end if
+
+#if $optional.gcs_max_retries
+  --gcs-max-retries $optional.gcs_max_retries
+#end if
+
+#if $advanced.ignore_safety_checks
+  $advanced.ignore_safety_checks
+#end if
+
+--input $input
+#include source=$vcf_output_opts#
+#if $common.QUIET
+  $common.QUIET
+#end if
+
+#if $common.use_jdk_deflater
+  $common.use_jdk_deflater
+#end if
+
+#if $common.use_jdk_inflater
+  $common.use_jdk_inflater
+#end if
+
+#if $common.verbosity
+  --verbosity $common.verbosity
+#end if
+]]></command>
+  <inputs>
+    <expand macro="gzip_vcf_params"/>
+    <param name="input" argument="--input" type="data" optional="false" format="vcf,vcf_bgzip" label="Input" help="Input VCF file(s)."/>
+    <section expanded="False" name="optional" title="Optional Parameters">
+      <param name="arguments_file" argument="--arguments_file" type="data" optional="true" format="" label="Arguments_File" help="read one or more arguments files and add them to the command line"/>
+      <param name="cloud_prefetch_buffer" argument="--cloud-prefetch-buffer" type="integer" optional="true" value="2" label="Cloud Prefetch Buffer" help="Size of the cloud-only prefetch buffer (in MB; 0 to disable)."/>
+      <param name="gather_type" argument="--gather-type" type="select" optional="true" label="Gather Type" help="Choose which method should be used to gather: BLOCK gathering is faster but onlyworks when you have both bgzipped inputs and outputs, while CONVENTIONAL gather is much slower but should work on all vcf files. AUTOMATIC chooses BLOCK if possible and CONVENTIONAL otherwise.">
+        <option selected="false" value="BLOCK">BLOCK</option>
+        <option selected="false" value="CONVENTIONAL">CONVENTIONAL</option>
+        <option selected="true" value="AUTOMATIC">AUTOMATIC</option>
+      </param>
+      <param name="gcs_max_retries" argument="--gcs-max-retries" type="integer" optional="true" value="20" label="Gcs Max Retries" help="If the GCS bucket channel errors out, how many times it will attempt to re-initiate the connection"/>
+    </section>
+    <section expanded="False" name="advanced" title="Advanced Parameters">
+      <param name="disable_contig_ordering_check" argument="--disable-contig-ordering-check" type="boolean" truevalue="--disable-contig-ordering-check" falsevalue="" optional="true" checked="false" label="Disable Contig Ordering Check" help="Don&amp;apos;t check relative ordering of contigs when doing a conventional gather"/>
+      <param name="ignore_safety_checks" argument="--ignore-safety-checks" type="boolean" truevalue="--ignore-safety-checks" falsevalue="" optional="true" checked="false" label="Ignore Safety Checks" help="Disable sanity checks to improve performance, may result in silently creating corrupted outputs data"/>
+    </section>
+    <section expanded="False" name="common" title="Common Parameters">
+      <param name="gatk_config_file" argument="--gatk-config-file" type="data" optional="true" format="" label="Gatk Config File" help="A configuration file to use with the GATK."/>
+      <param name="QUIET" argument="--QUIET" type="boolean" truevalue="--QUIET" falsevalue="" optional="true" checked="false" label="Quiet" help="Whether to suppress job-summary info on System.err."/>
+      <param name="use_jdk_deflater" argument="--use-jdk-deflater" type="boolean" truevalue="--use-jdk-deflater" falsevalue="" optional="true" checked="false" label="Use Jdk Deflater" help="Whether to use the JdkDeflater (as opposed to IntelDeflater)"/>
+      <param name="use_jdk_inflater" argument="--use-jdk-inflater" type="boolean" truevalue="--use-jdk-inflater" falsevalue="" optional="true" checked="false" label="Use Jdk Inflater" help="Whether to use the JdkInflater (as opposed to IntelInflater)"/>
+      <param name="verbosity" argument="--verbosity" type="select" optional="true" label="Verbosity" help="Control verbosity of logging.">
+        <option selected="false" value="ERROR">ERROR</option>
+        <option selected="false" value="WARNING">WARNING</option>
+        <option selected="true" value="INFO">INFO</option>
+        <option selected="false" value="DEBUG">DEBUG</option>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+    <expand macro="gzip_vcf_output_params"/>
+  </outputs>
+  <tests/>
+  <help><![CDATA[This tool combines together rows of variant calls from multiple VCFs,
+e.g. those produced by scattering calling across genomic intervals, into
+a single VCF. This tool enables scattering operations, e.g. in the
+cloud, and is preferred for such contexts over Picard MergeVcfs or
+Picard GatherVCfs. The tool also runs locally.
+
+The input files need to have the same set of samples but completely
+different sets of loci. These input files must be supplied in genomic
+order and must not have events at overlapping positions.
+
+Input
+~~~~~
+
+A set of VCF files, each specified in genomic order with the -I option,
+or a .list text file listing the set of VCFs to be merged, one file per
+line.
+
+Output
+~~~~~~
+
+A single VCF file containing the variant call records from the multiple
+VCFs.
+
+Usage examples
+~~~~~~~~~~~~~~
+
+Specify each VCF file within the command.
+
+::
+
+    gatk GatherVcfsCloud \
+        -I cohortA_chr1.vcf.gz \
+        -I cohortA_chr2.vcf.gz \
+        -O cohortA_chr1chr2.vcf.gz
+    
+
+Specify the VCF files using the following input.list:
+
+::
+
+        cohortA_chr1.vcf.gz
+        cohortA_chr2.vcf.gz
+    
+
+::
+
+    gatk GatherVcfsCloud \
+        -I input.list
+        -O cohortA_chr1chr2.vcf.gz
+    
+]]></help>
+  <citations>
+    <expand macro="citations"/>
+  </citations>
+</tool>
