@@ -165,15 +165,12 @@ class Mappings(object):
                                        'intervals': ['pre_gatk_ints_chth']
                                        }
 
-        # self.param_to_macro_tmpl = {'REFERENCE_SEQUENCE': {'optional': ['picard_ref_opts_opt'], 'required': ['picard_ref_opts']},
-        #                             'REFERENCE': {'required': ['picard_ref_opts_plain']},
-        #                             'reference': {'optional': ['ref_opts_opt'], 'required': ['ref_opts']}
-        #                             }
-
+        # For case where there is no required output parameter (output goes to stdout).
         self.stdout_tools = ['CountBases', 'CountReads', 'FlagStat']
         self.stdout_chth = ['stdout_to_output']
         self.stdout_macros = ['stdout_to_output_params']
 
+        # Define which fields are associated with which xml data types.
         self.param_tmpls = {'integer': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
                             'float': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
                             'text': ['name', 'argument', 'type', 'optional', 'value', 'label', 'help'],
@@ -281,6 +278,8 @@ class XmlTemplates(object):
         self.req_out_chth = PercentTemplate('%argument $%name')
         # Required boolean argument.
         self.req_out_chth_bool = PercentTemplate('$%name')
+        # May want to move the below templates out to the macros section.  These are a little more general
+        # since they may apply to any given non-required vcf argument.
         self.vcf_choose = PercentTemplate('#if $%section.%name'
                                           '\n#if $%section.%name.is_of_type("vcf_bgzip")'
                                           '\n%argument %name.vcf.gz'
@@ -314,10 +313,8 @@ class XmlTemplates(object):
                                          '\n#end if'
                                          '\n#end if')
         self.file_chth = PercentTemplate('#if $%section.%out_sel_name\n%argument $%name\n#end if')
-#        self.file_chth_old_gal = PercentTemplate('#if str($output_opt.output_opt_sel) == "yes":\n#if $output_opt.%out_sel_name:\n%argument $%name\n#end if\n#end if')
         self.ext_arg = PercentTemplate('#if $%section.%name\n  %argument $%section.%name\n#end if\n')
         self.ext_arg_bool = PercentTemplate('#if $%section.%name\n  $%section.%name\n#end if\n')
-#        self.ext_arg_old_gal = '#if str($%section.%{section}_sel) == "yes":\n#if $%section.%name:\n%argument $%section.%name\n#end if\n#end if'
         self.reg_arg = '#if $%name\n  %argument $%name\n#end if\n'
 
         # XML section. Most of this is handled via etrees, but some cases are more easily handled here.
@@ -478,8 +475,6 @@ class JsonXml(Mappings, XmlTemplates):
         # If argument kind value is defined as common, set self.common as True.
         self.common = (self.section == 'common')
         # Since output status is not listed in the json blob, we provide it as a mapping.
-        # TODO: Potentially search for phrase "Output" or "output" from description and set status accordingly.
-
         self.is_output = False
         if self.pname in self.gen_out_fmt:
             self.is_output = True
@@ -519,10 +514,6 @@ class JsonXml(Mappings, XmlTemplates):
         if self.pname in self.gen_in_fmt:
             self.is_input = True
 
-        # self.is_input = (not self.is_output) and self.type == 'data' \
-        #                 or self.pname in self.tool_file_type[self.tool_name] \
-        #                 or self.pname in self.gen_in_fmt
-
         if self.is_input and self.section == 'required':
             self.is_req_input = True
         else:
@@ -540,15 +531,6 @@ class JsonXml(Mappings, XmlTemplates):
             self.is_bool = True
         else:
             self.is_bool = False
-
-        # Set to common if this argument is seen inside the known common arguments.
-        # self.common = self.pname not in self.tool_data[self.tool_name]['output_fmt'] and \
-        #               self.pname not in self.tool_data[self.tool_name]['input_fmt']
-        #self.has_mcro_xml = self.xml_out['name'] in self.macro_xml
-        #self.has_mcro_tmpl = self.xml_out['name'] in self.macro_tmpl
-        # Check to see if the type, as defined in the json file, is recognized.
-        # if self.blob['type'] not in self.xml_json_type_map:
-        #     print('Argument type %s not recognized, skipping.' % self.blob['type'])
 
         # If there are options listed for an argument, set this as a select argument, which will need additional handling
         # when writing to XML.
@@ -568,9 +550,6 @@ class JsonXml(Mappings, XmlTemplates):
             self.is_input_vcf = self.is_input and self.gen_in_fmt[self.pname] == 'vcf'
         else:
             self.is_input_vcf = False
-
-
-        # self.chth_pre = self.macros['pre_chth']
 
         # Set input or output types, and provide dictionary of macro types for this parameter/tool.
         if self.tool_name in self.tool_file_type:
@@ -613,9 +592,6 @@ class JsonXml(Mappings, XmlTemplates):
         if self.pname in self.param_to_macro_pretmpl:
             self._simple_macro_update(self.param_to_macro_pretmpl[self.pname], 'pre_chth')
 
-        # if self.pname in self.macro_to_param:
-        #     self.main_chth = None
-
         # Create Cheetah strings.
         self.chth = []
         if self.macros['main_chth']:
@@ -648,19 +624,20 @@ class JsonXml(Mappings, XmlTemplates):
                 self.xml_param = None
 
         print(self.xml_param)
-        # if self.pname in self.param_to_macro_tmpl:
-        #     self.macros_tmpl = self.param_to_macro_tmpl[self.pname][self.section]
-        #     self.chth = self.chth_tmpl.substitute(macro=self.macros_tmpl)
-        # else:
-        #     self.macros_tmpl = None
-
-        # if self.pname in self.param_to_macro_pretmpl:
-        #     self.macros_pretmpl = self.param_to_macro_pretmpl[self.pname][self.section]
-        # else:
-        #     self.macros_pretmpl = None
 
         self._params_stdout()
         print('\n')
+
+    def _find_mapped_xml_type(self):
+        """
+
+        :return:
+        """
+        try:
+            return self.xml_json_type_map[self.blob['type']]
+        except:
+            raise Exception('Argument type %s not recognized.' % self.blob['type'])
+
 
     def _params_stdout(self):
         """
@@ -783,10 +760,6 @@ class JsonXml(Mappings, XmlTemplates):
 
         if self.is_req_output or self.is_output:
             xml_out['label'] = self._assign_label(xml_out)
-        # if self.in_frmt:
-        #     xml_out['format'] = self.in_frmt
-        # if self.param_format_map(self.blob['name']):
-        #     xml_out['format'] = self.param_format_map(self.blob['name'])
         for key in xml_out:
             #['argument', 'checked', 'falsevalue', 'format', 'help', 'label', 'max', 'min', 'name', 'optional', 'truevalue', 'type', 'value']:
             if xml_out[key]:
@@ -812,8 +785,6 @@ class JsonXml(Mappings, XmlTemplates):
         if val in self.xml_json_num_map:
             return self.xml_json_num_map[val]
         elif val[-2:] == '.0':
-            # or int(float(val))
-            # or printf-style
             return val[:-2]
         else:
             return val
@@ -838,9 +809,6 @@ class JsonXml(Mappings, XmlTemplates):
             if self.tool_name in self.tool_output_file_type:
                 if self.pname in self.tool_output_file_type[self.tool_name]:
                     return self.tool_output_file_type[self.tool_name][self.pname]
-                                           #[self.tool_output_file_type[self.tool_name][self.pname]]
-                # if self.pname in self.tool_data[self.tool_name]['output_fmt']:
-                #     return self.tool_data[self.tool_name]['output_fmt'][self.pname]
                 elif self.pname in self.gen_out_fmt:
                     return self.gen_out_fmt[self.pname]
                 elif self.pname in self.out_create_params:
@@ -855,8 +823,6 @@ class JsonXml(Mappings, XmlTemplates):
                         return self.file_type_map[self.tool_file_type[self.tool_name][self.pname]]
                     except:
                         return self.tool_file_type[self.tool_name][self.pname]
-                # if self.pname in self.tool_data[self.tool_name]['input_fmt']:
-                #     return self.tool_data[self.tool_name]['input_fmt'][self.pname]
             elif self.pname in self.gen_in_fmt:
                 try:
                     return self.file_type_map[self.gen_in_fmt[self.pname]]
@@ -1063,38 +1029,6 @@ class XmlEtrees(JsonShell):
         self._section_write('common', self.xml_comm)
         self._section_write('deprecated', self.xml_dep)
 
-        # if self.xml_opt or 'optional' in self.macros['main_xml']:
-        #     self.opt_sect = etree.SubElement(self.inputs, 'section', name='optional', title='Optional Parameters', expanded='False')
-        #     if 'optional' in self.macros['main_xml']:
-        #         for entry in self.macros['main_xml']['optional']:
-        #             etree.SubElement(self.opt_sect, 'expand', macro=entry)
-        #     self.build_inputs(self.xml_opt, self.opt_sect, 'param')
-
-
-        # if self.xml_adv or 'advanced' in self.macros['main_xml']:
-        #     self.adv_sect = etree.SubElement(self.inputs, 'section', name='advanced', title='Advanced Parameters', expanded='False')
-        #     if 'advanced' in self.macros['main_xml']:
-        #         for entry in self.macros['main_xml']['advanced']:
-        #             etree.SubElement(self.adv_sect, 'expand', macro=entry)
-        #     self.build_inputs(self.xml_adv, self.adv_sect, 'param')
-
-        # for entry in self.my_xml.tool_data[self.shell_dict['short_name']]['post_params']:
-        #     etree.SubElement(self.inputs, 'expand', macro=entry)
-
-        # # Temporary common section to work on macros.
-        # if self.xml_comm or 'common' in self.macros['main_xml']:
-        #     self.comm_sect = etree.SubElement(self.inputs, 'section', name='common', title='Common Parameters', expanded='False')
-        #     if 'common' in self.macros['main_xml']:
-        #         for entry in self.macros['main_xml']['common']:
-        #             etree.SubElement(self.comm_sect, 'expand', macro=entry)
-        #     self.build_inputs(self.xml_comm, self.comm_sect, 'param')
-        #
-        #
-        # if self.xml_dep:
-        #     self.dep_sect = etree.SubElement(self.inputs, 'section', name='deprecated', title='Deprecated Parameters',
-        #                                       expanded='False')
-        #     self.build_inputs(self.xml_dep, self.dep_sect, 'param')
-
         # OUTPUT section
         if self.xml_out:
             self.output_sect = etree.SubElement(self.inputs, 'section', name='output_opt',
@@ -1119,25 +1053,6 @@ class XmlEtrees(JsonShell):
         exp_cit = etree.SubElement(citations, 'expand', macro='citations')
 
         self.to_write = etree.tostring(tool, pretty_print=True, encoding="unicode")
-
-    # def _section_write(self, sname, stitle, selname):
-    #     """
-    #     Write a section, or write a conditional, depending on arg.
-    #     :return:
-    #     """
-    #     if not self.args.old_galaxy:
-    #         this_sect = etree.SubElement(self.inputs, 'section', name=sname, title=stitle, expanded='False')
-    #         when_yes = None
-    #     else:
-    #         this_sect = etree.SubElement(self.inputs, 'conditional', name=sname)
-    #         this_sect_sel = etree.SubElement(this_sect, 'param', name=selname, type='select',
-    #                                                 label=stitle)
-    #         opt_yes = etree.SubElement(this_sect_sel, 'option', value='yes')
-    #         opt_yes.text = 'yes'
-    #         opt_no = etree.SubElement(this_sect_sel, 'option', value='no', selected='true')
-    #         opt_no.text = 'no'
-    #         when_yes = etree.SubElement(this_sect, 'when', value='yes')
-    #     return this_sect, when_yes
 
     def _section_write(self, section, xml_sect):
         """
