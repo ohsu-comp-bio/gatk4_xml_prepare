@@ -50,6 +50,8 @@ class Mappings(object):
                              'String': 'text',
                              'Set[String]': 'text',
                              'SortOrder': 'select',
+                             'GatherType': 'select',
+                             'ClippingRepresentation': 'select',
                              'File': 'data',
                              'Set[File]': 'data',
                              'Set[MetricAccumulationLevel]': 'text',
@@ -97,39 +99,47 @@ class Mappings(object):
 
         # For a parameter to be included here, it must have a consistent file format throughout all GATK4 JSONs.
         # Otherwise, this will need to be specified as a macro, and macro will need to be connected to tool.
-        self.gen_out_fmt = {'activity_profile_out': 'tabular',
+        self.gen_out_fmt = {
+                            'activity_profile_out': 'tabular',
                             'assembly_region_out': 'tabular',
-                            'graph_output': 'txt',
                             'bam_output': 'bam',
+                            'graph_output': 'txt',
+                            'output_statistics': 'txt'
                             }
 
         # This is meant to be for those parameters that are booleans, but instruct for an output file to be created.
         # This is a work in progress, will probably ignore these parameters for the time being.
         self.out_create_params = {}
 
-        self.gen_in_fmt = {'alleles': 'vcf',
-                           'known_sites': 'vcf',
-                           'pedigree': 'tabular',
-                           'population_callset': 'vcf',
-                           'panel_of_normals': 'vcf',
-                           'contamination_fraction_per_sample_file': 'tabular',
-                           'concordance': 'vcf',
-                           'comp': 'vcf',
-                           'discordance': 'vcf',
-                           'gatk_config_file': 'txt',
-                           'germline_resource': 'vcf',
-                           'annotated_intervals': 'gatk_interval',
-                           'count_panel_of_normals': 'h5',
-                           'allelic_counts': 'tabular',
-                           'normal_allelic_counts': 'tabular',
-                           'denoised_copy_ratios': 'tabular',
-                           'dbsnp': 'vcf',
-                           'BAIT_INTERVALS': 'picard_interval_list',
-                           'TARGET_INTERVALS': 'picard_interval_list',
-                           'segments': 'tabular',
-                           'intervals': 'gatk_interval',
-                           'read_index': 'idx'
-                           }
+        self.gen_in_fmt = {
+            'alleles': 'vcf',
+            'allelic_counts': 'tabular',
+            'annotated_intervals': 'gatk_interval',
+            'BAIT_INTERVALS': 'picard_interval_list',
+            'bam_shard': 'data',
+            'bam_with_header': 'sam',
+            'clip_sequences_file': 'fasta',
+            'comp': 'vcf',
+            'concordance': 'vcf',
+            'contamination_fraction_per_sample_file': 'tabular',
+            'count_panel_of_normals': 'h5',
+            'dbsnp': 'vcf',
+            'denoised_copy_ratios': 'tabular',
+            'discordance': 'vcf',
+            'feature_file': 'vcf',
+            'gatk_config_file': 'txt',
+            'germline_resource': 'vcf',
+            'intervals': 'gatk_interval',
+            'known_sites': 'vcf',
+            'normal_allelic_counts': 'tabular',
+            'pedigree': 'tabular',
+            'population_callset': 'vcf',
+            'panel_of_normals': 'vcf',
+            'read_index': 'idx',
+            'segments': 'tabular',
+            'TARGET_INTERVALS': 'picard_interval_list',
+            'variant': 'vcf'
+        }
 
         # This is for the parameters in the XML
         self.param_to_macro_xml = {'exclude_intervals': ['gatk_excl_ints'],
@@ -160,6 +170,10 @@ class Mappings(object):
         #                             'reference': {'optional': ['ref_opts_opt'], 'required': ['ref_opts']}
         #                             }
 
+        self.stdout_tools = ['CountBases', 'CountReads', 'FlagStat']
+        self.stdout_chth = ['stdout_to_output']
+        self.stdout_macros = ['stdout_to_output_params']
+
         self.param_tmpls = {'integer': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
                             'float': ['name', 'argument', 'type', 'optional', 'value', 'min', 'max', 'label', 'help'],
                             'text': ['name', 'argument', 'type', 'optional', 'value', 'label', 'help'],
@@ -179,25 +193,65 @@ class Mappings(object):
 
         # Relate tool name to a common argument name, such as input (which can be connected to different file types),
         # and a file type.
-        self.tool_file_type = {'BaseRecalibrator': {'input': 'sam'},
+        self.tool_file_type = {'AnnotatePairOrientation': {'input': 'sam'},
+                               'BaseRecalibrator': {'input': 'sam'},
+                               'BwaMemIndexImageCreator': {'input': 'fasta'},
+                               'ClipReads': {'input': 'sam'},
+                               'CombineGVCFs': {'variant': 'vcf',
+                                                'input': 'sam'},
+                               'CountBases': {'input': 'sam'},
+                               'CountReads': {'input': 'sam'},
+                               'FixCallSetSampleOrdering': {'input': 'sam'},
+                               'FixMisencodedBaseQualityReads': {'input': 'sam'},
+                               'FlagStat': {'input': 'sam'},
+                               'GatherVcfsCloud': {'input': 'vcf'},
+                               'GetSampleName': {'input': 'sam'},
+                               'LeftAlignIndels': {'input': 'sam'},
                                'Mutect2': {'input': 'sam'},
+                               'PrintReads': {'input': 'sam'},
                                'SortSam': {'INPUT': 'sam'},
+                               'SplitReads': {'input': 'sam'},
                                'IntervalListToBed': {'INPUT': 'picard_interval_list'}}
-        self.tool_output_file_type = {'BaseRecalibrator': {'output': 'gatk_recal'},
+
+        self.tool_output_file_type = {'AnnotatePairOrientation': {'output': 'vcf'},
+                                      'BaseRecalibrator': {'output': 'gatk_recal'},
+                                      'BwaMemIndexImageCreator': {'output': 'data'},
+                                      'ClipReads': {'output': 'sam'},
+                                      'CombineGVCFs': {'output': 'vcf'},
+                                      'ConvertHeaderlessHadoopBamShardToBam': {'output': 'sam'},
+                                      'FixCallSetSampleOrdering': {'output': 'vcf'},
+                                      'FixMisencodedBaseQualityReads': {'output': 'sam'},
+                                      'GatherVcfsCloud': {'output': 'vcf'},
+                                      'GetSampleName': {'output': 'txt'},
+                                      'IndexFeatureFile': {'output': 'data'},
+                                      'LeftAlignIndels': {'OUTPUT': 'sam'},
                                       'Mutect2': {'output': 'vcf'},
+                                      'PrintReads': {'output': 'sam'},
                                       'SortSam': {'OUTPUT': 'sam'},
                                       'IntervalListToBed': {'OUTPUT': 'bed'}}
 
         # Relate the name of the argument to the selection of macros that goes with it.
         self.macro_to_param = {'input': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['gatk_bam_input'],
-                                                 'main_xml': ['gatk_bam_req_params']}},
+                                                 'main_xml': ['gatk_bam_req_params']},
+                                         'fasta': {'main_chth': ['ref_opts_input'],
+                                                   'main_xml': ['ref_sel']},
+                                         'vcf': {'pre_chth': [],
+                                                 'main_chth': [],
+                                                 'main_xml': []}
+                                         },
+                               'variant': {'vcf': {'pre_chth': ['gatk_tabix_multi'],
+                                                   'main_chth': ['gatk_input_multi'],
+                                                   'main_xml': ['vcf_input_params_multi']}
+                                           },
                                'INPUT': {'sam': {'pre_chth': ['bam_index_pre_chth'],
                                                  'main_chth': ['picard_bam_input'],
-                                                 'main_xml': ['gatk_bam_req_params']}},
+                                                 'main_xml': ['gatk_bam_req_params']}
+                                         },
                                'output': {'vcf': {'main_chth': ['vcf_output_opts'],
                                                   'main_xml': ['gzip_vcf_params'],
-                                                  'out_xml': ['gzip_vcf_output_params']}}
+                                                  'out_xml': ['gzip_vcf_output_params']}
+                                          }
                                }
 
         # For parameters we universally do not want to see in the UI.
@@ -327,7 +381,7 @@ class CheetahPrep(XmlTemplates):
             return self.vcf_choose_req.substitute(section=self.section, name=self.pname, argument=self.argname)
 
         if self.is_input_vcf and not self.is_req and self.pre_mname:
-            return self.vcf_tabix.substitute(name=self.pname)
+            return self.vcf_tabix.substitute(section=self.section, name=self.pname)
 
         if self.is_input_vcf and self.is_req and self.pre_mname:
             return self.vcf_tabix_req.substitute(name=self.pname)
@@ -425,12 +479,20 @@ class JsonXml(Mappings, XmlTemplates):
         self.common = (self.section == 'common')
         # Since output status is not listed in the json blob, we provide it as a mapping.
         # TODO: Potentially search for phrase "Output" or "output" from description and set status accordingly.
-        self.is_output = ((self.pname in self.gen_out_fmt) or
-                          (self.pname in self.tool_output_file_type[self.tool_name]) or
-                          (self.pname in self.out_create_params))
+
+        self.is_output = False
+        if self.pname in self.gen_out_fmt:
+            self.is_output = True
+        if self.tool_name in self.tool_output_file_type:
+            if self.pname in self.tool_output_file_type[self.tool_name]:
+                self.is_output = True
+        if self.pname in self.out_create_params:
+            self.is_output = True
+
         # Define this parameter as required output.
-        if self.is_output and self.section == 'required':
+        if self.is_output and (self.section == 'required' or self.pname in self.macro_to_param):
             self.is_req_output = True
+            self.section = 'required'
         else:
             self.is_req_output = False
         # If this is not required output, define additional variables to allow for selecting whether or not we
@@ -448,9 +510,19 @@ class JsonXml(Mappings, XmlTemplates):
             self.out_sel_arg = None
 
         # If this parameter is defined as 'data' from our mapping, and was not defined as output, it is an input file.
-        self.is_input = (not self.is_output) and self.type == 'data' \
-                        or self.pname in self.tool_file_type[self.tool_name] \
-                        or self.pname in self.gen_in_fmt
+        self.is_input = False
+        if self.type == 'data' and not self.is_output:
+            self.is_input = True
+        if self.tool_name in self.tool_file_type:
+            if self.pname in self.tool_file_type[self.tool_name]:
+                self.is_input = True
+        if self.pname in self.gen_in_fmt:
+            self.is_input = True
+
+        # self.is_input = (not self.is_output) and self.type == 'data' \
+        #                 or self.pname in self.tool_file_type[self.tool_name] \
+        #                 or self.pname in self.gen_in_fmt
+
         if self.is_input and self.section == 'required':
             self.is_req_input = True
         else:
@@ -460,7 +532,6 @@ class JsonXml(Mappings, XmlTemplates):
             self.is_req = True
         else:
             self.is_req = False
-
 
         # This will hold a new structure, corresponding to xml key/value pairs.
         self.xml_out = self.reblob()
@@ -509,7 +580,9 @@ class JsonXml(Mappings, XmlTemplates):
                     self._macro_update(self.macro_to_param[self.pname][self.input_type])
                 except:
                     pass
-            elif self.pname in self.tool_output_file_type[self.tool_name]:
+
+        if self.tool_name in self.tool_output_file_type:
+            if self.pname in self.tool_output_file_type[self.tool_name]:
                 self.output_type = self.tool_output_file_type[self.tool_name][self.pname]
                 try:
                     self._macro_update(self.macro_to_param[self.pname][self.output_type])
@@ -549,7 +622,7 @@ class JsonXml(Mappings, XmlTemplates):
             for macro in self.macros['main_chth']:
                 self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, self.is_input_vcf,
                                              mname=macro, is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
-        else:
+        elif not self.is_input_vcf:
             self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req, self.is_input_vcf,
                                          mname=None, is_bool=self.is_bool, out_sel_name=self.out_sel_name).chth)
 
@@ -563,7 +636,7 @@ class JsonXml(Mappings, XmlTemplates):
             self.chth.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req,
                                              self.is_input_vcf).chth)
             self.chth_pre.append(CheetahPrep(self.pname, self.xml_out['argument'], self.section, self.is_req,
-                                             self.is_input_vcf, pre_mname=True).chth)
+                                             self.is_input_vcf, pre_mname='blah').chth)
 
         # Fill in XML tags to dict.
         if self.is_output:
@@ -574,6 +647,7 @@ class JsonXml(Mappings, XmlTemplates):
             else:
                 self.xml_param = None
 
+        print(self.xml_param)
         # if self.pname in self.param_to_macro_tmpl:
         #     self.macros_tmpl = self.param_to_macro_tmpl[self.pname][self.section]
         #     self.chth = self.chth_tmpl.substitute(macro=self.macros_tmpl)
@@ -585,9 +659,8 @@ class JsonXml(Mappings, XmlTemplates):
         # else:
         #     self.macros_pretmpl = None
 
-        # if self.pname == 'create_output_bam_index':
-        # self._params_stdout()
-        # print('\n')
+        self._params_stdout()
+        print('\n')
 
     def _params_stdout(self):
         """
@@ -714,9 +787,13 @@ class JsonXml(Mappings, XmlTemplates):
         #     xml_out['format'] = self.in_frmt
         # if self.param_format_map(self.blob['name']):
         #     xml_out['format'] = self.param_format_map(self.blob['name'])
-        for key in xml_out.keys():
+        for key in xml_out:
             #['argument', 'checked', 'falsevalue', 'format', 'help', 'label', 'max', 'min', 'name', 'optional', 'truevalue', 'type', 'value']:
-            xml_out[key] = escape(xml_out[key], {'"': '&quot;', "'": '&apos;'})
+            if xml_out[key]:
+                xml_out[key] = escape(xml_out[key], {'"': '&quot;', "'": '&apos;'})
+            else:
+                xml_out[key] = ''
+
         return xml_out
 
     def _assign_label(self, format):
@@ -758,25 +835,28 @@ class JsonXml(Mappings, XmlTemplates):
         :return:
         """
         if self.is_output:
-            if self.pname in self.tool_output_file_type[self.tool_name]:
-                return self.tool_output_file_type[self.tool_name][self.pname]
-                                       #[self.tool_output_file_type[self.tool_name][self.pname]]
-            # if self.pname in self.tool_data[self.tool_name]['output_fmt']:
-            #     return self.tool_data[self.tool_name]['output_fmt'][self.pname]
-            elif self.pname in self.gen_out_fmt:
-                return self.gen_out_fmt[self.pname]
-            elif self.pname in self.out_create_params:
-                return self.out_create_params[self.pname]
-            else:
-                return None
-        elif self.is_input:
-            if self.pname in self.tool_file_type[self.tool_name]:
-                try:
-                    return self.file_type_map[self.tool_file_type[self.tool_name][self.pname]]
-                except:
-                    return self.tool_file_type[self.tool_name][self.pname]
-            # if self.pname in self.tool_data[self.tool_name]['input_fmt']:
-            #     return self.tool_data[self.tool_name]['input_fmt'][self.pname]
+            if self.tool_name in self.tool_output_file_type:
+                if self.pname in self.tool_output_file_type[self.tool_name]:
+                    return self.tool_output_file_type[self.tool_name][self.pname]
+                                           #[self.tool_output_file_type[self.tool_name][self.pname]]
+                # if self.pname in self.tool_data[self.tool_name]['output_fmt']:
+                #     return self.tool_data[self.tool_name]['output_fmt'][self.pname]
+                elif self.pname in self.gen_out_fmt:
+                    return self.gen_out_fmt[self.pname]
+                elif self.pname in self.out_create_params:
+                    return self.out_create_params[self.pname]
+                else:
+                    return ''
+
+        if self.is_input:
+            if self.tool_name in self.tool_file_type:
+                if self.pname in self.tool_file_type[self.tool_name]:
+                    try:
+                        return self.file_type_map[self.tool_file_type[self.tool_name][self.pname]]
+                    except:
+                        return self.tool_file_type[self.tool_name][self.pname]
+                # if self.pname in self.tool_data[self.tool_name]['input_fmt']:
+                #     return self.tool_data[self.tool_name]['input_fmt'][self.pname]
             elif self.pname in self.gen_in_fmt:
                 try:
                     return self.file_type_map[self.gen_in_fmt[self.pname]]
@@ -784,9 +864,9 @@ class JsonXml(Mappings, XmlTemplates):
                     return self.gen_in_fmt[self.pname]
             else:
                 return 'txt'
-        else:
-            # Not sure yet what this will be used for, but I think we need it.
-            return ''
+        # else:
+        #     # Not sure yet what this will be used for, but I think we need it.
+        #     return ''
 
 
 class JsonShell(Mappings, XmlTemplates):
@@ -828,8 +908,9 @@ class JsonShell(Mappings, XmlTemplates):
         with open(args.json, 'rU') as myfile:
             self.json_file = json.load(myfile)
             self.shell_dict = self.build_shell_dict()
+            self.tool_name = self.shell_dict['short_name']
             for entry in self.json_file['arguments']:
-                self.my_xml = JsonXml(entry, self.shell_dict['short_name'], args)
+                self.my_xml = JsonXml(entry, self.tool_name, args)
                 if self.my_xml.pname not in self.ignore_params:
                     # If something is in the macros_xml variable, add it here to my_macros.
                     self._macro_update(self.my_xml.macros)
@@ -863,6 +944,13 @@ class JsonShell(Mappings, XmlTemplates):
 
                     if self.my_xml.sel_blob:
                         self.sel_dict[self.my_xml.pname] = self.my_xml.sel_blob
+
+        # Handle cases where there is no output parameter, just stdout.
+        if self.tool_name in self.stdout_tools:
+            for macro in self.stdout_chth:
+                self.tool_chth.append(CheetahPrep(None, None, None, mname=macro).chth)
+            for macro in self.stdout_macros:
+                self.macros['out_xml']['required'].append(macro)
 
     def _macro_update(self, new_macros):
         """

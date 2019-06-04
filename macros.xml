@@ -90,6 +90,20 @@
     #end for
     </template>
 
+    <template name="ref_opts_input">
+    #for $sect in $sections
+        #if $varExists($sect + "reference_source.reference_source_selector")
+            #if $getVar($sect + "reference_source.reference_source_selector") != "no_ref"
+                #if $getVar($sect + "reference_source.reference_source_selector") != "history"
+                    --input $getVar($sect + "reference_source.reference_sequence.fields.path")
+                #else
+                    --input $getVar($sect + "reference_source.reference_sequence")
+                #end if
+            #end if
+        #end if
+    #end for
+    </template>
+
 
     <!--Interval Macros-->
     <template name="gatk_ints_chth">
@@ -286,14 +300,18 @@
     </template>
 
     <template name="bam_index_pre_chth"><![CDATA[
-        #if $input.is_of_type("bam")
-            ln -s $input input.bam &&
-            samtools index input.bam &&
-        #else
-            ln -s $input input.sam &&
-            samtools view -bS input.sam -o input.bam &&
-            samtools index input.bam &&
+    #for $sect in $sections
+        #if $varExists($sect + "input")
+            #if $getVar($sect + "input").is_of_type("bam")
+                ln -s $getVar($sect + "input") input.bam &&
+                samtools index input.bam &&
+            #else
+                ln -s $getVar($sect + "input") input.sam &&
+                samtools view -bS input.sam -o input.bam &&
+                samtools index input.bam &&
+            #end if
         #end if
+    #end for
     ]]></template>
 
     <xml name="gatk_bam_req_params">
@@ -312,15 +330,45 @@
     ]]></template>
 
 
+    <!--Output goes to stdout, no output parameter exists.-->
+    <template name="stdout_to_output">
+        > output.txt
+    </template>
 
+    <xml name="stdout_to_output_params">
+        <data format="txt" name="output" label="${tool.name} on ${on_string}: txt" from_work_dir="output.txt" />
+    </xml>
 
+    <!--Multiple input files, true for List[File] types, and sometimes List[String] types    -->
+    <template name="gatk_input_multi"><![CDATA[
+        #for $num, $file in enumerate($variant)
+            #if $file.is_of_type("vcf_bgzip")
+                --variant input${num}.vcf.gz
+            #elif $file.is_of_type("txt")
+                --variant input${num}.list
+            #else
+                --variant input${num}.vcf
+            #end if
+        #end for
+    ]]></template>
 
+    <template name="gatk_tabix_multi"><![CDATA[
+        #for $num, $file in enumerate($variant)
+            #set datatype = $file.datatype
+            #if $file.is_of_type("vcf_bgzip")
+                ln -s $file input${num}.vcf.gz &&
+                tabix input${num}.vcf.gz &&
+            #elif $file.is_of_type("txt")
+                ln -s $file input${num}.list &&
+            #else
+                ln -s $file input${num}.vcf &&
+            #end if
+        #end for
+    ]]></template>
 
-
-
-
-
-
+    <xml name="vcf_input_params_multi">
+        <param name="input" type="data" multiple="true" format="vcf,vcf_bgzip" label="Input VCF file" help="Input VCF(s) to be sorted. Multiple inputs must have the same sample names (in order)"/>
+    </xml>
 
 
 
@@ -403,35 +451,6 @@
         #end for
     ]]></template>
 
-    <template name="gatk_input_multi"><![CDATA[
-        #for $num, $file in enumerate($variant)
-            #if $file.is_of_type("vcf_bgzip")
-                --variant input${num}.vcf.gz
-            #elif $file.is_of_type("txt")
-                --variant input${num}.list
-            #else
-                --variant input${num}.vcf
-            #end if
-        #end for
-    ]]></template>
-
-    <template name="gatk_tabix_multi"><![CDATA[
-        #for $num, $file in enumerate($variant)
-            #set datatype = $file.datatype
-            #if $file.is_of_type("vcf_bgzip")
-                ln -s $file input${num}.vcf.gz &&
-                tabix input${num}.vcf.gz &&
-            #elif $file.is_of_type("txt")
-                ln -s $file input${num}.list &&
-            #else
-                ln -s $file input${num}.vcf &&
-            #end if
-        #end for
-    ]]></template>
-
-    <xml name="vcf_input_params_multi">
-        <param name="input" type="data" multiple="true" format="vcf,vcf_bgzip" label="Input VCF file" help="Input VCF(s) to be sorted. Multiple inputs must have the same sample names (in order)"/>
-    </xml>
 
     <!--Picard single input tools-->
     <template name="vcf_tabix"><![CDATA[
