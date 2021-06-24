@@ -11,7 +11,7 @@ class CheetahPrepTestCase(unittest.TestCase):
         self.pre_mname = "PRE_MACRO_TEST"
 
     def test_req_chth_macro(self):
-        self.chth_prep = CheetahPrep(self.pname, self.argname, "required", True, self.mname)
+        self.chth_prep = CheetahPrep(self.pname, self.argname, "required", True, mname=self.mname)
         self.exp_chth = "#include source=$MACRO_TEST#"
         self.assertEqual(self.chth_prep.chth, self.exp_chth)
 
